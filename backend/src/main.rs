@@ -1,26 +1,17 @@
 use axum::
 {
-    routing::get,
-    Router,
     extract::{Extension, Path},
-    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
+    routing::get,
+    Json, Router,
 };
-use tracing_subscriber::
-{
-    layer::SubscriberExt,
-    util::SubscriberInitExt,
-};
-use tower_http::cors::
-{
-    Any, 
-    CorsLayer,
-};
-use sqlx::mysql::MySqlPool;
-use serde::{Serialize, Deserialize};
-use serde_json::json;
 use chrono::NaiveTime;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use sqlx::mysql::MySqlPool;
+use tower_http::cors::{Any, CorsLayer};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Deserialize)]
 struct Params
@@ -43,7 +34,7 @@ struct Map
 {
     map_name: String,
     times_played: Option<i32>,
-    time_added: Option<String>
+    time_added: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, sqlx::FromRow)]
@@ -76,7 +67,8 @@ struct Course
 }
 
 #[derive(Serialize, Deserialize)]
-struct Records {
+struct Records
+{
     records_count: usize,
     records: Vec<Record>,
 }
@@ -99,19 +91,21 @@ enum ApiError
 
 impl IntoResponse for ApiError
 {
-    fn into_response(self) -> Response{
+    fn into_response(self) -> Response
+    {
         let (status, err_msg) = match self
         {
-            ApiError::NotFound => (StatusCode::NOT_FOUND, "These aren't the droids you're looking for.",),
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "These aren't the droids you're looking for."),
             ApiError::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Database error."),
         };
-        (status, Json(json!({"Error": err_msg }))).into_response()
+        (status, Json(json!({ "Error": err_msg }))).into_response()
     }
-    
 }
 
-impl From<sqlx::Error> for ApiError {
-    fn from(e: sqlx::Error) -> Self {
+impl From<sqlx::Error> for ApiError
+{
+    fn from(e: sqlx::Error) -> Self
+    {
         ApiError::DatabaseError(e)
     }
 }
@@ -132,10 +126,12 @@ async fn main()
         .init();
 
     let cors = CorsLayer::new().allow_origin(Any);
-    let pool = MySqlPool::connect(&std::env::var("DATABASE_URL").unwrap()).await.expect("Unable to connect to database.");
+    let pool = MySqlPool::connect(&std::env::var("DATABASE_URL").unwrap())
+        .await
+        .expect("Unable to connect to database.");
     let app = Router::new()
         .fallback(test)
-        .route("/", get(|| async {"Hello, Sailor!"}))
+        .route("/", get(|| async { "Hello, Sailor!" }))
         .route("/api/maps", get(get_maps))
         .route("/api/:map", get(get_course_names))
         .route("/api/:map/:course", get(get_course_data))
@@ -152,16 +148,16 @@ async fn main()
 }
 
 #[axum_macros::debug_handler]
-async fn get_records(Extension(pool): Extension<MySqlPool>, Path(Params {checkpoints, map, course, courseid, rflag}): Path<Params>) -> Result<Json<Records>, ApiError>
+async fn get_records(Extension(pool): Extension<MySqlPool>, Path(Params { checkpoints, map, course, courseid, rflag }): Path<Params>) -> Result<Json<Records>, ApiError>
 {
-    let mut map_records: Vec<Record> = if rflag == 0 && checkpoints == false
+    let mut map_records: Vec<Record> = if rflag == 0 && !checkpoints
     {
         sqlx::query_as!(Record, r#"SELECT p.playername AS player_name, p.steamid AS steamid, r.course_time AS course_time, DATE_FORMAT(r.date_set, '%Y-%m-%d') AS date, r.course_time AS diff
                                 FROM player p, record r, course c, map m
                                 WHERE r.steamidfk = p.steamid AND c.course_name=? AND r.courseidfk=? AND m.map_name=? AND c.mapfk=?
                                 ORDER BY r.course_time ASC, r.date_set ASC, r.record_key ASC"#, course, courseid, map, map).fetch_all(&pool).await?
     }
-    else if rflag == 0 && checkpoints == true
+    else if rflag == 0 && checkpoints
     {
         sqlx::query_as!(Record, r#"SELECT p.playername AS player_name, p.steamid AS steamid, r.course_time AS course_time, DATE_FORMAT(r.date_set, '%Y-%m-%d') AS date, r.course_time AS diff
                                 FROM player p, record_cp r, course c, map m
@@ -169,7 +165,7 @@ async fn get_records(Extension(pool): Extension<MySqlPool>, Path(Params {checkpo
                                 ORDER BY r.course_time ASC, r.date_set ASC, r.record_key ASC"#, course, courseid, map, map).fetch_all(&pool).await?
     }
     //NOTE: Reverse course are unlikely to be played with checkpoints
-    else 
+    else
     {
         sqlx::query_as!(Record, r#"SELECT p.playername AS player_name, p.steamid AS steamid, r.course_time AS course_time, DATE_FORMAT(r.date_set, '%Y-%m-%d') AS date, r.course_time AS diff
                                 FROM player p, record r, course c, map m
@@ -213,9 +209,7 @@ async fn get_maps(Extension(pool): Extension<MySqlPool>) -> Result<Json<Maps>, A
 {
     let maps_list : Vec<Map> = sqlx::query_as!(Map, r#"SELECT map_name, times_played, DATE_FORMAT(map.time_added, '%Y-%m-%d') AS time_added FROM map"#).fetch_all(&pool).await?;
 
-    Ok(Json(Maps {
-        maps: maps_list,
-    }))
+    Ok(Json(Maps { maps: maps_list }))
 }
 
 #[axum_macros::debug_handler]
@@ -223,7 +217,7 @@ async fn get_course_names(Extension(pool): Extension<MySqlPool>, Path(param): Pa
 {
     let map = param;
     //NOTE: Fetch courses in alphabetic order?
-    let map_course_names : Vec<CourseName> = sqlx::query_as!(CourseName, r#"SELECT course_name FROM course WHERE mapfk=?"#, map).fetch_all(&pool).await?;    
+    let map_course_names: Vec<CourseName> = sqlx::query_as!(CourseName, r#"SELECT course_name FROM course WHERE mapfk=?"#, map).fetch_all(&pool).await?;
 
     Ok(Json(CourseNames {
         course_count: map_course_names.len(),
@@ -246,3 +240,4 @@ async fn get_course_data(Extension(pool): Extension<MySqlPool>, Path(param): Pat
         reverse: course_data.reverse,
     }))
 }
+

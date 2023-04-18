@@ -39,7 +39,8 @@ async fn MapListComponent<G: Html>(cx: Scope<'_>) -> View<G>
         {
             "bg-ternary"
         }
-        else {
+        else
+        {
             "bg-secondary"
         };
 
