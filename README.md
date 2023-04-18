@@ -8,5 +8,5 @@ Frontend made with Sycamore. Backend made using Axum and Sqlx.
 :heavy_check_mark: Main page with a list of all the maps available in the database (not available in the original toplist)  
 :heavy_check_mark: Display map records  
 :heavy_check_mark: Switch between pro and noob records  
-:x: Display records on page load  
+:heavy_check_mark: Display records on page load  
 :x: Profile pages

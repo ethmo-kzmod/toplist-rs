@@ -3,6 +3,7 @@ use sycamore::futures::spawn_local_scoped;
 use sycamore::suspense::Suspense;
 use sycamore::prelude::*;
 use serde::{Serialize, Deserialize};
+use web_sys::HtmlElement;
 
 //NOTE: Structs copied over from the backend
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -77,20 +78,38 @@ async fn CoursesComponent<'a, G: Html>(cx: BoundedScope<'a, 'a>, map_name: Strin
 {
 	let state = use_context::<RcSignal<String>>(cx);
 	let data = get_course_names(&map_name).await.unwrap_or_default();
+	let first = create_node_ref(cx);
 
-	let views = View::new_fragment(data.course_names.into_iter().map(|course| 
+	let views = View::new_fragment(data.course_names.into_iter().enumerate().map(|(i, course)| 
     {   
     	let course_name = course.course_name.clone();
-    	let first = create_node_ref(cx);
-        view!
-        {
-            cx,
-            div(ref=first, on:click=move |_| state.set(course_name.clone()), class="font-bold text-primary hover:scale-110 hover:bg-primary hover:text-secondary duration-150 hover:cursor-pointer bg-transparent border-2 border-solid border-primary px-2 py-4")
-            {
-                    (course.course_name) //TODO: Use the first course in the list to automatically fetch data on page load
-            }
-        }
+
+    	if i == 0
+    	{
+    		view!
+	        {
+	            cx,
+	            div(ref=first, on:click=move |_| state.set(course_name.clone()), class="font-bold text-primary hover:scale-110 hover:bg-primary hover:text-secondary duration-150 hover:cursor-pointer bg-transparent border-2 border-solid border-primary px-2 py-4")
+	            {
+	                    (course.course_name)
+	            }
+	        }
+    	}
+    	else
+    	{
+    		view!
+    		{
+    			cx,
+    			div(on:click=move |_| state.set(course_name.clone()), class="font-bold text-primary hover:scale-110 hover:bg-primary hover:text-secondary duration-150 hover:cursor-pointer bg-transparent border-2 border-solid border-primary px-2 py-4")
+	            {
+	                    (course.course_name)
+	            } 
+    		}	
+    	}
+        
     }).collect());
+
+	first.get::<DomNode>().unchecked_into::<HtmlElement>().click();
 
 	view!
 	{
@@ -223,7 +242,6 @@ pub fn RecordsPage<G: Html>(cx: Scope, map_name: String) -> View<G>
 				{
 					label(class="ml-0 mt-6 mb-6 mr-6 relative inline-flex items-center cursor-pointer")
 					{
-						//TODO: Create a signal for checkbox to be able to toggle between pro and noob records
 						input(on:change=move |_| cp_signal.set(!*cp_signal.get()), type="checkbox", value="", class="sr-only peer")
 						{
 						}

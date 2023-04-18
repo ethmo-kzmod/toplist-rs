@@ -1,3 +1,0 @@
-"api/maps" -> list of maps
-"api/:map" -> list of courses for specified map
-"api/records/:cp/:map/:courseid/rflag" -> list of records for the given course with specific reverse flag on a map (:cp = pro/noob for eithe nocp/cp records)
