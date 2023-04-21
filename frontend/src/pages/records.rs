@@ -173,16 +173,18 @@ async fn RecordsComponent<G: Html>(cx: Scope<'_>, map_name: String) -> View<G>
                             "bg-secondary"
                         };
                         
+                        let steamid = record.steamid.clone();
+
                         view!
                         {
                             cx,
-                           tr(class=bg)
-                           {
+                            tr(class=bg)
+                            {
                                 td(class="px-8 py-4 whitespace-nowrap text-sm xl:text-base 3xl:text-xl font-bold text-white")
                                 {
                                     (i)
                                 }
-                                a(href="/#") //TODO: Implement player profiles and link to them
+                                a(href=format!("/profile/{}", steamid))
                                 {
                                     td(class="font-bold max-w-[300px] text-ellipsis overflow-hidden hover:scale-110 hover:text-primary duration-150 hover:cursor-pointer text-sm xl:text-base 3xl:text-xl text-gray-400 px-8 py-4")
                                     {
@@ -222,7 +224,7 @@ pub fn RecordsPage<G: Html>(cx: Scope, map_name: String) -> View<G>
     let course_signal = create_rc_signal(String::new());
     let cp_signal = create_rc_signal(false);
     provide_context(cx, cp_signal.clone());
-    provide_context(cx, course_signal.clone());
+    provide_context(cx, course_signal);
     let map_name_clone = map_name.clone();
 
     view!
