@@ -159,7 +159,7 @@ async fn PlayerRecordsComponent<'a, G: Html>(cx: BoundedScope<'a, 'a>, steamid: 
                             {
                                 (i)
                             }
-                            a(href=format!("/{}", map))
+                            a(href=format!("/map/{}", map))
                             {
                                 td(class="max-w-[300px] text-ellipsis overflow-hidden hover:scale-110 hover:text-primary duration-150 hover:cursor-pointer text-sm xl:text-base 3xl:text-xl text-gray-400 font-bold px-6 py-4 whitespace-nowrap")
                                 {

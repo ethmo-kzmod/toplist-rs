@@ -56,7 +56,7 @@ async fn MapListComponent<G: Html>(cx: Scope<'_>) -> View<G>
                 {
                     (i)
                 }
-                a(href=format!("/{}",map_name))
+                a(href=format!("/map/{}",map_name))
                 {
                     td(class="font-bold max-w-[300px] text-ellipsis overflow-hidden hover:scale-110 hover:text-primary duration-150 hover:cursor-pointer text-sm xl:text-base 3xl:text-xl text-gray-400 px-8 py-4")
                     {

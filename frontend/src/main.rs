@@ -9,7 +9,7 @@ enum AppRoutes
 {
     #[to("/")]
     Maps,
-    #[to("/<map_name>")]
+    #[to("/map/<map_name>")]
     Records { map_name: String },
     #[to("/profile/<steamid>")]
     Profile { steamid: String },
